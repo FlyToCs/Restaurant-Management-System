@@ -78,17 +78,18 @@ public class RestaurantService : IRestaurantService
     {
         if (Storage.CurrentRestaurant != null)
         {
-            for (int i = 0; i < Storage.CurrentRestaurant.Menu.Count; i++)
-            {
-                if (Storage.CurrentRestaurant.Menu[i].Id == food.Id)
+            if (Storage.CurrentRestaurant.Menu != null)
+                for (int i = 0; i < Storage.CurrentRestaurant.Menu.Count; i++)
                 {
-                    Storage.CurrentRestaurant.Menu[i].Name = food.Name;
-                    Storage.CurrentRestaurant.Menu[i].Price = food.Price;
-                    Storage.CurrentRestaurant.Menu[i].Discount = food.Discount;
-                    Storage.CurrentRestaurant.Menu[i].Description = food.Description;
-                    return true;
+                    if (Storage.CurrentRestaurant.Menu[i].Id == food.Id)
+                    {
+                        Storage.CurrentRestaurant.Menu[i].Name = food.Name;
+                        Storage.CurrentRestaurant.Menu[i].Price = food.Price;
+                        Storage.CurrentRestaurant.Menu[i].Discount = food.Discount;
+                        Storage.CurrentRestaurant.Menu[i].Description = food.Description;
+                        return true;
+                    }
                 }
-            }
         }
         return false;
     }
@@ -134,8 +135,12 @@ public class RestaurantService : IRestaurantService
     // Order operations
     public void AddOrder(Order order)
     {
-        order.TotalPrice = CalculateTotalPrice(order.Food);
-        order.TotalDiscount = CalculateTotalDiscount(order.Food);
+        if (order.Food != null)
+        {
+            order.TotalPrice = CalculateTotalPrice(order.Food);
+            order.TotalDiscount = CalculateTotalDiscount(order.Food);
+        }
+
         Storage.Orders.Add(order);
     }
 

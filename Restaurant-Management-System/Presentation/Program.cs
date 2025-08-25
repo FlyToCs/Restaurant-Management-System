@@ -15,6 +15,7 @@ using Spectre.Console;
 IAuthentication authentication = new Authentication();
 IRestaurantService restaurantService = new RestaurantService();
 ICustomerService customerService = new CustomerService();
+IAdminService adminService = new AdminService();
 
 
 
@@ -187,7 +188,7 @@ void MainMenu(RoleEnum role)
             // --- ADMIN OPTIONS ---
             case "0. 🍳 Show Menu":
 
-                ConsolePainter.WriteTable(restaurantService.ShowMenu(Storage.CurrentRestaurant), ConsoleColor.Yellow, ConsoleColor.Cyan);
+                ConsolePainter.WriteTable(restaurantService.ShowMenu(Storage.CurrentRestaurant) ?? throw new InvalidOperationException(), ConsoleColor.Yellow, ConsoleColor.Cyan);
                 Console.ReadKey();
                 break;
             case "1. 😋 Add Food":
@@ -343,9 +344,16 @@ void MainMenu(RoleEnum role)
                         }
 
 
-                        ConsolePainter.CyanMessage($"\n💲 Total Price: {restaurantService.CalculateTotalPrice(order.Food):N0}");
-                        ConsolePainter.CyanMessage($"💰 Total Discount: {restaurantService.CalculateTotalDiscount(order.Food):N0}");
-                        ConsolePainter.CyanMessage($"💵 Final Price: {restaurantService.CalculateFinalPrice(order.Food):N0}");
+                        if (order.Food != null)
+                        {
+                            ConsolePainter.CyanMessage(
+                                $"\n💲 Total Price: {restaurantService.CalculateTotalPrice(order.Food):N0}");
+                            ConsolePainter.CyanMessage(
+                                $"💰 Total Discount: {restaurantService.CalculateTotalDiscount(order.Food):N0}");
+                            ConsolePainter.CyanMessage(
+                                $"💵 Final Price: {restaurantService.CalculateFinalPrice(order.Food):N0}");
+                        }
+
                         Console.WriteLine(new string('-', 40));
                     }
                 }
@@ -410,9 +418,18 @@ void MainMenu(RoleEnum role)
                 break;
 
             case "8. 🍽️ Add Restaurant":
+                Console.Write("\nEnter restaurant name: ");
+                string restaurantName = Console.ReadLine()!;
+
+                Console.Write("Description: ");
+                string restaurantDescription = Console.ReadLine()!;
                 
+                adminService.AddRestaurant(new Restaurant(restaurantName, restaurantDescription), currentUser);
+                ConsolePainter.WriteTable(adminService.GetAllRestaurants(currentUser));
+                Console.ReadKey();
                 break;
             case "9. ⚙️ Setting":
+
                 break;
             case "10. 🥲 Logout":
                 Authentication(true);
