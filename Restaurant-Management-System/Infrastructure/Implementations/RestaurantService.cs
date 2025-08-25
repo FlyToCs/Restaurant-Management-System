@@ -100,18 +100,20 @@ public class RestaurantService : IRestaurantService
         return restaurant.Menu;
     }
 
-    // Customer operations
-    public void AddCustomer(Customer customer)
+    public Food SearchFood(Restaurant restaurant, int id)
     {
-        Storage.UserList.Add(customer);
+        foreach (var food in restaurant.Menu!)
+        {
+            if (food.Id == id)
+            {
+                return food;
+            }
+        }
+
+        throw new Exception("The food didn't found");
     }
 
-    public bool RemoveCustomer(Customer customer)
-    {
-        Storage.UserList.Remove(customer);
-        return true;
-    }
-
+ 
 
 
     public List<Customer> GetCustomers()

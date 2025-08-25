@@ -10,10 +10,10 @@ public interface IRestaurantService
     bool UpdateFood(Food food);
     List<Food>? ShowMenu(Restaurant restaurant);
 
+    Food SearchFood(Restaurant restaurant,int id);
 
     // Customer operations
-    void AddCustomer(Customer customer);
-    bool RemoveCustomer(Customer customer);
+
     List<Customer> GetCustomers();
 
 

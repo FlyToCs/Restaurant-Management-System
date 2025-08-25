@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Transactions;
 using Figgle.Fonts;
 using Restaurant_Management_System.Application.Interfaces;
 using Restaurant_Management_System.Domain.Entities;
@@ -13,6 +14,7 @@ using Spectre.Console;
 
 IAuthentication authentication = new Authentication();
 IRestaurantService restaurantService = new RestaurantService();
+ICustomerService customerService = new CustomerService();
 
 
 
@@ -139,10 +141,13 @@ void Authentication(bool flag)
 
 void MainMenu(RoleEnum role)
 {
+    var currentUser = (Admin)Storage.CurrentUser!;
+    Storage.CurrentRestaurant = currentUser.Restaurants[0];
+    var currentRestaurant = Storage.CurrentRestaurant;
+    Customer currentCustomer = null!;
 
-    bool exit = false;
 
-    while (!exit)
+    while (true)
     {
         string[] options;
         Console.Clear();
@@ -157,10 +162,11 @@ void MainMenu(RoleEnum role)
                 "3. ❌ Remove Food",
                 "4. 😊 Add Customer",
                 "5. 😡 Remove Customer",
-                "6. 🥰 Add Order",
-                "7. 🍴 View Orders",
+                "6. 🍴 View Orders",
+                "7. 🥰 Add Order",
                 "8. 🍽️ Add Restaurant",
-                "9. 🥲 Logout"
+                "9. ⚙️ Setting",
+                "10. 🥲 Logout"
             };
         }
         else // Customer
@@ -259,34 +265,55 @@ void MainMenu(RoleEnum role)
                 break;
 
             case "4. 😊 Add Customer":
+                Console.Write("FirsName: ");
+                string fName = Console.ReadLine()!;
 
+                Console.Write("LastName: ");
+                string lName = Console.ReadLine()!;
+
+                Console.Write("Email: ");
+                string email = Console.ReadLine()!;
+
+                Console.Write("Password: ");
+                string password = Console.ReadLine()!;
+
+                customerService.AddCustomer(new Customer(fName, lName, email, password, RoleEnum.Customer, null!));
                 break;
 
 
             case "5. 😡 Remove Customer":
-                
-                ConsolePainter.WriteTable(restaurantService.GetCustomers(), ConsoleColor.Yellow, ConsoleColor.Cyan);
+
+                ConsolePainter.WriteTable(customerService.GetAllCustomers(Storage.UserList), ConsoleColor.Yellow, ConsoleColor.Cyan);
+                Console.Write("Enter an id to remove the customer: ");
+                int customerIdToDelete = int.Parse(Console.ReadLine()!);
+                var customerToDelete = customerService.SearchCustomer(customerIdToDelete);
+                if (customerToDelete == null)
+                {
+                   ConsolePainter.RedMessage("Failed action"); 
+                }
+                else
+                {
+                    customerService.RemoveCustomer(customerToDelete);
+                    ConsolePainter.GreenMessage("deleted successfully");
+                }
+
                 Console.ReadKey();
                 break;
-            case "6. 🥰 Add Order":
 
-                break;
 
-            case "7. 🍴 View Orders":
-                Storage.CurrentRestaurant = Storage.RestaurantList[1];
+            case "6. 🍴 View Orders":
                 var orders = restaurantService.GetOrders(Storage.CurrentRestaurant);
 
                 if (orders.Count == 0)
                 {
-                    Console.WriteLine("No orders found for this restaurant.");
+                    ConsolePainter.RedMessage("No orders found for this restaurant.");
                 }
                 else
                 {
                     foreach (var order in orders)
                     {
-                        Console.WriteLine($"Order ID: {order.Id}");
-                        Console.WriteLine($"Customer: {order.Customer?.FirstName} {order.Customer?.LastName}");
-                        Console.WriteLine("Foods:");
+                        Console.WriteLine($"\n📌 Order ID: {order.Id}    {order.Customer?.FirstName} {order.Customer?.LastName}");
+                        Console.WriteLine("\n🍕 Items:");
 
                         if (order.Food != null && order.Food.Count > 0)
                         {
@@ -303,7 +330,7 @@ void MainMenu(RoleEnum role)
                                 else if (food is Dessert dessert)
                                     extraInfo = dessert.IsFrozen ? $"(Frozen, Sweetness {dessert.SweetnessLevel})" : $"(Sweetness {dessert.SweetnessLevel})";
 
-                                Console.WriteLine($" - {food.Name} {extraInfo} | Price: {food.Price:N0}");
+                                Console.WriteLine($"    ✅ {food.Name} {extraInfo} | Price: {food.Price:N0}");
                             }
                         }
                         else
@@ -312,20 +339,79 @@ void MainMenu(RoleEnum role)
                         }
 
 
-                        ConsolePainter.CyanMessage($"Total Price: {restaurantService.CalculateTotalPrice(order.Food):N0}");
-                        ConsolePainter.CyanMessage($"Total Discount: {restaurantService.CalculateTotalDiscount(order.Food):N0}");
-                        ConsolePainter.CyanMessage($"Final Price: {restaurantService.CalculateFinalPrice(order.Food):N0}");
+                        ConsolePainter.CyanMessage($"\n💲 Total Price: {restaurantService.CalculateTotalPrice(order.Food):N0}");
+                        ConsolePainter.CyanMessage($"💰 Total Discount: {restaurantService.CalculateTotalDiscount(order.Food):N0}");
+                        ConsolePainter.CyanMessage($"💵 Final Price: {restaurantService.CalculateFinalPrice(order.Food):N0}");
                         Console.WriteLine(new string('-', 40));
                     }
                 }
 
                 Console.ReadKey();
                 break;
+            case "7. 🥰 Add Order":
+                Console.Write("add new customer or user old: ");
+                var selectCustomer = Prompt.Select("Select an option", new[]
+                {
+                    "1. New Customer",
+                    "2. Old Customer",
+                });
+                if (selectCustomer == "2. Old Customer")
+                {
+                    ConsolePainter.WriteTable(customerService.GetAllCustomers(Storage.UserList), ConsoleColor.Yellow, ConsoleColor.Cyan);
+                    Console.Write("Enter an id: ");
+                    currentCustomer = customerService.SearchCustomer(int.Parse(Console.ReadLine()!));
+                }
+                else
+                {
+                    Console.Write("FirsName: "); 
+                    fName = Console.ReadLine()!;
+
+                    Console.Write("LastName: "); 
+                    lName = Console.ReadLine()!;
+
+                    Console.Write("Email: ");
+                    email = Console.ReadLine()!;
+
+                    Console.Write("Password: ");
+                    password = Console.ReadLine()!;
+                    currentCustomer = new Customer(fName, lName, email, password, RoleEnum.Customer, null!);
+                    customerService.AddCustomer(currentCustomer);
+
+                }
+                bool addItemToOrder = true;
+                List<Food> orderFood = new();
+                while (addItemToOrder)
+                {
+                    Console.Clear();
+
+                    ConsolePainter.WriteTable(currentRestaurant.Menu!);
+                    Console.Write("enter an item id to add: ");
+                    int foodId = int.Parse(Console.ReadLine()!);
+                    var food = restaurantService.SearchFood(currentRestaurant, foodId);
+                    orderFood.Add(food);
+
+                    
+
+                    var loop = Prompt.Select("Do you want to counting", new[]
+                    {
+                        "Yes",
+                        "No",
+                    });
+                    if (loop == "No")
+                        addItemToOrder = false;
+                    
+
+                }
+                Storage.Orders.Add(new Order(currentCustomer, currentRestaurant, orderFood));
+                break;
 
             case "8. 🍽️ Add Restaurant":
+                
                 break;
-            case "9. 🥲 Logout":
-                exit = true;
+            case "9. ⚙️ Setting":
+                break;
+            case "10. 🥲 Logout":
+                Authentication(true);
                 break;
 
 

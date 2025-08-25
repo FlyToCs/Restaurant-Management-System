@@ -29,9 +29,7 @@ namespace Restaurant_Management_System.Infrastructure.Persistence
                 new ContactInfo() { Address = "Enghelab Square", City = "Karaj", Country = "Iran", Phone = "0215555555", PhoneNumber = "09123333333" }));
             UserList.Add(new Customer("Kamran", "Mooavi","k@gmail.com", "123", RoleEnum.Customer,
                 new ContactInfo() { Address = "Sis Street, k50", City = "Mashhad", Country = "Iran", Phone = "0215555555", PhoneNumber = "09123333333" }));
-            // UserList.Add(new Admin("Mohammad", "Dehghani","m@gmail.com", "123456", RoleEnum.Admin,
-            //     new ContactInfo() { Address = "Qhods street, Valiasr", City = "Qom", Country = "Iran", Phone = "0215555555", PhoneNumber = "09123333333" }));
-
+           
             var admin1 = new Admin("Mohammad", "Dehghani", "m@gmail.com", "123456", RoleEnum.Admin,
                 new ContactInfo()
                 {
@@ -88,7 +86,7 @@ namespace Restaurant_Management_System.Infrastructure.Persistence
             var customer2 = (Customer)UserList[1];
             var customer3 = (Customer)UserList[2];
 
-            // Order1: Toranj, چند غذا
+            // Order1: Toranj
             List<Food> order1Foods = new List<Food>();
             
             order1Foods.Add(toranjMenu[0]); // Cheeseburger
