@@ -261,6 +261,10 @@ void MainMenu(RoleEnum role)
                 break;
 
             case "3. ❌ Remove Food":
+                ConsolePainter.WriteTable(currentRestaurant.Menu!);
+                Console.Write("Enter an id to delete from menu: ");
+                int foodIdToRemove = int.Parse(Console.ReadLine()!);
+                restaurantService.RemoveFood(currentRestaurant, restaurantService.SearchFood(currentRestaurant, foodIdToRemove));
 
                 break;
 
