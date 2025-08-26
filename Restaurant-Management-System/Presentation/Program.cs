@@ -1,47 +1,48 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
-using System.Transactions;
 using Figgle.Fonts;
-using Restaurant_Management_System.Application.Interfaces;
+using Restaurant_Management_System.Application.Services;
 using Restaurant_Management_System.Domain.Entities;
 using Restaurant_Management_System.Domain.Enums;
+using Restaurant_Management_System.Domain.Interfaces;
+using Restaurant_Management_System.Infrastructure;
 using Restaurant_Management_System.Infrastructure.Exceptions;
-using Restaurant_Management_System.Infrastructure.Implementations;
-using Restaurant_Management_System.Infrastructure.Persistence;
 using Restaurant_Management_System.Presentation;
 using Sharprompt;
 using Spectre.Console;
+Console.OutputEncoding = System.Text.Encoding.UTF8;
 
 IAuthentication authentication = new Authentication();
 IRestaurantService restaurantService = new RestaurantService();
 ICustomerService customerService = new CustomerService();
+IOrderService orderService = new OrderService();
 IAdminService adminService = new AdminService();
 
 
 
-Console.OutputEncoding = System.Text.Encoding.UTF8;
+
 
 
 
 Console.WriteLine("نسخه اول رستوران".Reverse().ToArray());
-//
-// await AnsiConsole.Progress()
-//     .StartAsync(async ctx =>
-//     {
-//         // Define tasks
-//         var task1 = ctx.AddTask("[red]Connecting to database[/]");
-//         var task2 = ctx.AddTask("[aqua]Loading application[/]");
-//
-//         while (!ctx.IsFinished)
-//         {
-//             // Simulate some work
-//             await Task.Delay(150);
-//
-//             // Increment
-//             task1.Increment(5.5);
-//             task2.Increment(2.5);
-//         }
-//     });
+
+await AnsiConsole.Progress()
+    .StartAsync(async ctx =>
+    {
+        // Define tasks
+        var task1 = ctx.AddTask("[red]Connecting to database[/]");
+        var task2 = ctx.AddTask("[aqua]Loading application[/]");
+
+        while (!ctx.IsFinished)
+        {
+            // Simulate some work
+            await Task.Delay(150);
+
+            // Increment
+            task1.Increment(5.5);
+            task2.Increment(2.5);
+        }
+    });
 
 
 
@@ -143,7 +144,17 @@ void Authentication(bool flag)
 void MainMenu(RoleEnum role)
 {
     var currentUser = (Admin)Storage.CurrentUser!;
-    Storage.CurrentRestaurant = currentUser.Restaurants[0];
+    Console.Clear();
+    foreach (var currentUserRestaurant in currentUser.Restaurants)
+    {
+        ConsolePainter.CyanMessage($"{currentUserRestaurant.Id}. {currentUserRestaurant.Name}");
+    }
+
+    Console.Write("\nSelect a restaurant by id: ");
+    int restaurantId = int.Parse(Console.ReadLine()!);
+    adminService.ChangeRestaurant(adminService.GetRestaurant(currentUser, restaurantId));
+    Console.ReadKey();
+    
     var currentRestaurant = Storage.CurrentRestaurant;
     Customer currentCustomer = null!;
 
@@ -282,23 +293,23 @@ void MainMenu(RoleEnum role)
                 Console.Write("Password: ");
                 string password = Console.ReadLine()!;
 
-                customerService.AddCustomer(new Customer(fName, lName, email, password, RoleEnum.Customer, null!));
+                adminService.AddCustomer(new Customer(fName, lName, email, password, RoleEnum.Customer, null!));
                 break;
 
 
             case "5. 😡 Remove Customer":
 
-                ConsolePainter.WriteTable(customerService.GetAllCustomers(Storage.UserList), ConsoleColor.Yellow, ConsoleColor.Cyan);
+                ConsolePainter.WriteTable(adminService.GetAllCustomers(Storage.UserList), ConsoleColor.Yellow, ConsoleColor.Cyan);
                 Console.Write("Enter an id to remove the customer: ");
                 int customerIdToDelete = int.Parse(Console.ReadLine()!);
-                var customerToDelete = customerService.SearchCustomer(customerIdToDelete);
+                var customerToDelete = adminService.SearchCustomer(customerIdToDelete);
                 if (customerToDelete == null)
                 {
                    ConsolePainter.RedMessage("Failed action"); 
                 }
                 else
                 {
-                    customerService.RemoveCustomer(customerToDelete);
+                    adminService.RemoveCustomer(customerToDelete);
                     ConsolePainter.GreenMessage("deleted successfully");
                 }
 
@@ -307,7 +318,7 @@ void MainMenu(RoleEnum role)
 
 
             case "6. 🍴 View Orders":
-                var orders = restaurantService.GetOrders(Storage.CurrentRestaurant);
+                var orders = orderService.GetOrders(Storage.CurrentRestaurant);
 
                 if (orders.Count == 0)
                 {
@@ -347,11 +358,11 @@ void MainMenu(RoleEnum role)
                         if (order.Food != null)
                         {
                             ConsolePainter.CyanMessage(
-                                $"\n💲 Total Price: {restaurantService.CalculateTotalPrice(order.Food):N0}");
+                                $"\n💲 Total Price: {orderService.CalculateTotalPrice(order.Food):N0}");
                             ConsolePainter.CyanMessage(
-                                $"💰 Total Discount: {restaurantService.CalculateTotalDiscount(order.Food):N0}");
+                                $"💰 Total Discount: {orderService.CalculateTotalDiscount(order.Food):N0}");
                             ConsolePainter.CyanMessage(
-                                $"💵 Final Price: {restaurantService.CalculateFinalPrice(order.Food):N0}");
+                                $"💵 Final Price: {orderService.CalculateFinalPrice(order.Food):N0}");
                         }
 
                         Console.WriteLine(new string('-', 40));
@@ -369,9 +380,9 @@ void MainMenu(RoleEnum role)
                 });
                 if (selectCustomer == "2. Old Customer")
                 {
-                    ConsolePainter.WriteTable(customerService.GetAllCustomers(Storage.UserList), ConsoleColor.Yellow, ConsoleColor.Cyan);
+                    ConsolePainter.WriteTable(adminService.GetAllCustomers(Storage.UserList), ConsoleColor.Yellow, ConsoleColor.Cyan);
                     Console.Write("Enter an id: ");
-                    currentCustomer = customerService.SearchCustomer(int.Parse(Console.ReadLine()!));
+                    currentCustomer = adminService.SearchCustomer(int.Parse(Console.ReadLine()!));
                 }
                 else
                 {
@@ -387,7 +398,7 @@ void MainMenu(RoleEnum role)
                     Console.Write("Password: ");
                     password = Console.ReadLine()!;
                     currentCustomer = new Customer(fName, lName, email, password, RoleEnum.Customer, null!);
-                    customerService.AddCustomer(currentCustomer);
+                    adminService.AddCustomer(currentCustomer);
 
                 }
                 bool addItemToOrder = true;
@@ -429,7 +440,7 @@ void MainMenu(RoleEnum role)
                 Console.ReadKey();
                 break;
             case "9. ⚙️ Setting":
-
+                
                 break;
             case "10. 🥲 Logout":
                 Authentication(true);

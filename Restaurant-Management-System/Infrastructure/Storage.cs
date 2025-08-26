@@ -7,7 +7,7 @@ using Restaurant_Management_System.Domain.Entities;
 using Restaurant_Management_System.Domain.Enums;
 
 
-namespace Restaurant_Management_System.Infrastructure.Persistence
+namespace Restaurant_Management_System.Infrastructure
 {
     public static class Storage
     {

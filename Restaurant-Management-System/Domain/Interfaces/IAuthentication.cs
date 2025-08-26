@@ -1,7 +1,7 @@
 ﻿using Restaurant_Management_System.Domain.Entities;
 using Restaurant_Management_System.Domain.Enums;
 
-namespace Restaurant_Management_System.Application.Interfaces;
+namespace Restaurant_Management_System.Domain.Interfaces;
 
 public interface IAuthentication
 {

@@ -1,9 +1,9 @@
-﻿using Restaurant_Management_System.Application.Interfaces;
-using Restaurant_Management_System.Domain.Entities;
+﻿using Restaurant_Management_System.Domain.Entities;
 using Restaurant_Management_System.Domain.Enums;
-using Restaurant_Management_System.Infrastructure.Persistence;
+using Restaurant_Management_System.Domain.Interfaces;
+using Restaurant_Management_System.Infrastructure;
 
-namespace Restaurant_Management_System.Infrastructure.Implementations;
+namespace Restaurant_Management_System.Application.Services;
 
 public class RestaurantService : IRestaurantService
 {
@@ -21,31 +21,6 @@ public class RestaurantService : IRestaurantService
         return orders;
     }
 
-    public decimal CalculateTotalPrice(List<Food> foods)
-    {
-        decimal total = 0;
-        foreach (var f in foods)
-        {
-            total += f.Price;
-        }
-        return total;
-    }
-
-    public decimal CalculateTotalDiscount(List<Food> foods)
-    {
-        decimal totalDiscount = 0;
-        foreach (var f in foods)
-        {
-            totalDiscount += f.Discount;
-        }
-        return totalDiscount;
-    }
-
-    // Final price after discount
-    public decimal CalculateFinalPrice(List<Food> foods)
-    {
-        return CalculateTotalPrice(foods) - CalculateTotalDiscount(foods);
-    }
 
     // Food operations
     public void AddFood(Food food)
@@ -116,33 +91,6 @@ public class RestaurantService : IRestaurantService
 
  
 
-
-    public List<Customer> GetCustomers()
-    {
-        List<Customer> allCustomers = new();
-        foreach (var user in Storage.UserList)
-        {
-            if (user.Role == RoleEnum.Customer)
-            {
-                allCustomers.Add((Customer)user);
-            }
-        }
-
-        return allCustomers;
-    }
-
-
-    // Order operations
-    public void AddOrder(Order order)
-    {
-        if (order.Food != null)
-        {
-            order.TotalPrice = CalculateTotalPrice(order.Food);
-            order.TotalDiscount = CalculateTotalDiscount(order.Food);
-        }
-
-        Storage.Orders.Add(order);
-    }
 
 
 
