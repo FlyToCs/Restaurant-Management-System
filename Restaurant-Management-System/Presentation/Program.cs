@@ -26,23 +26,38 @@ IAdminService adminService = new AdminService();
 
 Console.WriteLine("نسخه اول رستوران".Reverse().ToArray());
 
+
+
 await AnsiConsole.Progress()
+    .Columns(new ProgressColumn[]
+    {
+        new TaskDescriptionColumn(),    
+        new ProgressBarColumn(),        
+        new PercentageColumn(),         
+        new SpinnerColumn()           
+    })
     .StartAsync(async ctx =>
     {
-        // Define tasks
-        var task1 = ctx.AddTask("[red]Connecting to database[/]");
-        var task2 = ctx.AddTask("[aqua]Loading application[/]");
+        var dbTask = ctx.AddTask("[red]Connecting to database[/]");
+        var appTask = ctx.AddTask("[yellow]Loading application[/]");
+        var uiTask = ctx.AddTask("[green]Building UI[/]");
 
         while (!ctx.IsFinished)
         {
-            // Simulate some work
             await Task.Delay(150);
 
-            // Increment
-            task1.Increment(5.5);
-            task2.Increment(2.5);
+            dbTask.Increment(2.5);
+            appTask.Increment(2);
+            uiTask.Increment(3.0);
         }
     });
+
+AnsiConsole.MarkupLine("[bold cyan]✔ Application started successfully![/]");
+Console.ReadKey();
+
+
+
+
 
 
 
@@ -177,8 +192,8 @@ void MainMenu(RoleEnum role)
                 "6. 🍴 View Orders",
                 "7. 🥰 Add Order",
                 "8. 🍽️ Add Restaurant",
-                "9. ⚙️ Setting",
-                "10. 🥲 Logout"
+                "9. ⚙️ Change Restaurant",
+                "10.🥲 Logout"
             };
         }
         else // Customer
@@ -439,10 +454,19 @@ void MainMenu(RoleEnum role)
                 ConsolePainter.WriteTable(adminService.GetAllRestaurants(currentUser));
                 Console.ReadKey();
                 break;
-            case "9. ⚙️ Setting":
-                
+            case "9. ⚙️ Change Restaurant":
+                foreach (var currentUserRestaurant in currentUser.Restaurants)
+                {
+                    ConsolePainter.CyanMessage($"{currentUserRestaurant.Id}. {currentUserRestaurant.Name}");
+                }
+
+                Console.Write("\nSelect a restaurant by id: ");
+                restaurantId = int.Parse(Console.ReadLine()!);
+                adminService.ChangeRestaurant(adminService.GetRestaurant(currentUser, restaurantId));
+
+
                 break;
-            case "10. 🥲 Logout":
+            case "10.🥲 Logout":
                 Authentication(true);
                 break;
 
